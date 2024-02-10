@@ -1,17 +1,19 @@
+from argparse import Namespace
+
 from .config import Config
-from .helpers import DirectoryIterator
+from .docstring_generator import generate_project_docstrings
+from .extensions import function_code_queue, source_code_queue
+from .ui import create_application_config, parse_arguments
 
 
 def main():
-    root_dir: str = '.'
-    folders_ignore: list[str] = ['venv', '__pycache__', '.git', '.venv']
-    config: Config = Config(
-        root_directory=root_dir,
+    args: Namespace = parse_arguments()
+    config: Config = create_application_config(args)
+    generate_project_docstrings(
+        config=config,
+        source_code_queue=source_code_queue,
+        function_code_queue=function_code_queue,
     )
-    config.folders_ignore.extend(folders_ignore)
-    directory_iterator: DirectoryIterator = DirectoryIterator(config=config)
-    for files in directory_iterator:
-        print(files)
 
 
 if __name__ == '__main__':
