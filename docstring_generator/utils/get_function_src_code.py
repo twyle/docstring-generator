@@ -1,13 +1,14 @@
+from ast import AST, FunctionDef, NodeVisitor
 import ast
-from ast import AST, FunctionDef
-from typing import Any
 
 from utils import parse_src, read_src
 
 
-class MyVisitor(ast.NodeVisitor):
-    def visit_FunctionDef(self, node: FunctionDef) -> Any:
-        print(f'entering {node.name}')
+class MyVisitor(NodeVisitor):
+    def visit_FunctionDef(self, node: FunctionDef) -> None:
+        print(f'Getting the source code for the function: {node.name}')
+        src_code: str = ast.unparse(node)
+        print(src_code)
 
 
 def main():
