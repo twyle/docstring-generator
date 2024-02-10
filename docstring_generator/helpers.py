@@ -1,44 +1,66 @@
-from collections import deque
-from collections.abc import Iterator
-from os import listdir, path
+import ast
+import subprocess
+from ast import AST, Constant, Expr, FunctionDef
+from os import path
 
 from .config import Config
+from .llms import chatgpt
+from .templates import function_prompt
 
 
-class DirectoryIterator(Iterator):
-    def __init__(self, config: Config) -> None:
-        super().__init__()
-        if not path.exists(config.root_directory):
-            raise ValueError(
-                f'No such directory or file "{config.root_directory}" exists.'
-            )
-        if path.isfile(config.root_directory):
-            raise ValueError('The root directory should be a file.')
-        self._folders_ignore = set(config.folders_ignore)
-        self._files_ignore = set(config.files_ignore)
-        self._queue = deque(config.root_directory)
+def read_src(file_path: str) -> str:
+    with open(file_path, 'r', encoding='utf-8') as f:
+        return f.read()
 
-    def __iter__(self) -> Iterator:
-        return super().__iter__()
 
-    def __next__(self) -> list[str]:
-        if self._queue:
-            files: list[str] = list()
-            for _ in range(len(self._queue)):
-                directory: str = self._queue.popleft()
-                for entry in listdir(directory):
-                    entry_path: str = path.join(directory, entry)
-                    if (
-                        path.isfile(entry_path)
-                        and self._is_python_file(entry_path)
-                        and entry not in self._files_ignore
-                    ):
-                        files.append(entry_path)
-                    elif path.isdir(entry_path) and entry not in self._folders_ignore:
-                        self._queue.append(entry_path)
-            return files
-        else:
-            raise StopIteration()
+def save_src(file_path: str, new_src: str) -> str:
+    with open(file_path, 'w', encoding='utf-8') as f:
+        return f.write(new_src)
 
-    def _is_python_file(self, file_path: str) -> bool:
-        return file_path.split('.')[-1] == 'py'
+
+def parse_src(file_src: str) -> AST:
+    return ast.parse(file_src)
+
+
+def print_src(src_tree: AST) -> None:
+    print(ast.dump(src_tree, indent=4))
+
+
+function_dcstr: str = '''
+def subtract(a: int | float, b: int | float) -> int | float:
+    """Subtracts two numbers
+
+    Parameters
+    ----------
+    a : int or float
+        The first number to subtract.
+    b : int or float
+        The second number to subtract.
+
+    Returns
+    -------
+    int or float
+        The result of subtracting b from a.
+    """
+    return a - b
+'''
+
+
+def generate_doc_string(src_code: str, config: Config) -> str:
+    prompt_formatted_str: str = function_prompt.format(
+        function_code=src_code, documentation_style=config.documentation_style
+    )
+    function_and_docstring: str = chatgpt.invoke(prompt_formatted_str)
+    return function_and_docstring
+    # return function_dcstr
+
+
+def make_docstring_node(docstr: str):
+    constant_str: Constant = Constant(docstr)
+    return Expr(value=constant_str)
+
+
+def format_file(file_path: str) -> None:
+    """Format the file using black."""
+    if path.exists(file_path):
+        subprocess.run(['black', file_path], capture_output=True)

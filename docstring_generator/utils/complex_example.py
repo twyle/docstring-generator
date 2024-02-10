@@ -1,15 +1,15 @@
 from dotenv import load_dotenv
 
 load_dotenv()
+import ast
 import os
+from ast import AST, Constant, Expr, FunctionDef, NodeTransformer
 
 from langchain.llms.base import BaseLLM
 from langchain.prompts import PromptTemplate
 from langchain_openai import OpenAI
-from ast import AST, FunctionDef, NodeTransformer, Constant, Expr
-import ast
-
 from utils import parse_src, read_src
+
 
 def generate_doc_string(src_code: str) -> str:
     api_key: str = os.environ['OPENAI_API_KEY']
@@ -68,6 +68,7 @@ def main():
     ast.fix_missing_locations(new_tree)
     new_module_code = ast.unparse(new_tree)
     print(new_module_code)
+
 
 if __name__ == '__main__':
     main()

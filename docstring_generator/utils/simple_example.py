@@ -1,15 +1,15 @@
 from dotenv import load_dotenv
 
 load_dotenv()
+import ast
 import os
+from ast import AST, FunctionDef, NodeVisitor
 
 from langchain.llms.base import BaseLLM
 from langchain.prompts import PromptTemplate
 from langchain_openai import OpenAI
-from ast import AST, FunctionDef, NodeVisitor
-import ast
-
 from utils import parse_src, read_src
+
 
 def generate_doc_string(src_code: str) -> str:
     api_key: str = os.environ['OPENAI_API_KEY']
@@ -58,6 +58,7 @@ def main():
     src_tree: AST = parse_src(src)
     visitor = MyVisitor()
     visitor.visit(src_tree)
+
 
 if __name__ == '__main__':
     main()

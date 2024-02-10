@@ -1,5 +1,5 @@
-from ast import AST, FunctionDef, NodeVisitor
 import ast
+from ast import AST, FunctionDef, NodeVisitor
 
 from utils import parse_src, read_src
 
